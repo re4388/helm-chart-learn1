@@ -121,4 +121,4 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASS }}
           repository: ${{ env.DOCKER_IMAGE_NAME }}
-          readme-filepath: ./README.md
+          readme-filepath: ./application/README.md
