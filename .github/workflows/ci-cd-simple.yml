@@ -39,7 +39,7 @@ jobs:
         run: mvn clean test
 
       - name: 產生測試報告
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: success() || failure()
         with:
           name: Maven 測試結果
