@@ -6,15 +6,8 @@ on:
   pull_request:
     branches: [main, master]
 
-# 新增權限設定
-permissions:
-  contents: read
-  actions: read
-  checks: write
-  pull-requests: write
-
 env:
-  DOCKER_IMAGE_NAME: REPLACE_WITH_YOUR_DOCKERHUB_USERNAME/demo-app
+  DOCKER_IMAGE_NAME: re4388/demo-app
   JAVA_VERSION: "17"
 
 jobs:
@@ -35,7 +28,7 @@ jobs:
           cache: maven
 
       - name: 快取 Maven 相依性
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -52,8 +45,7 @@ jobs:
           name: Maven 測試結果
           path: application/target/surefire-reports/*.xml
           reporter: java-junit
-          fail-on-error: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fail-on-error: true
 
       - name: 上傳測試結果
         uses: actions/upload-artifact@v4
@@ -83,7 +75,7 @@ jobs:
           cache: maven
 
       - name: 快取 Maven 相依性
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
