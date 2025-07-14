@@ -14,7 +14,7 @@ permissions:
   pull-requests: write
 
 env:
-  DOCKER_IMAGE_NAME: REPLACE_WITH_YOUR_DOCKERHUB_USERNAME/demo-app
+  DOCKER_IMAGE_NAME: re4388/demo-app
   JAVA_VERSION: "17"
 
 jobs:
