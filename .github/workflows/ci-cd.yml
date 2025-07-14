@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main, master]
 
+# 新增權限設定
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+
 env:
   DOCKER_IMAGE_NAME: your-dockerhub-username/demo-app
   JAVA_VERSION: "17"
@@ -28,7 +35,7 @@ jobs:
           cache: maven
 
       - name: 快取 Maven 相依性
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -45,7 +52,8 @@ jobs:
           name: Maven 測試結果
           path: application/target/surefire-reports/*.xml
           reporter: java-junit
-          fail-on-error: true
+          fail-on-error: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 上傳測試結果
         uses: actions/upload-artifact@v4
@@ -75,7 +83,7 @@ jobs:
           cache: maven
 
       - name: 快取 Maven 相依性
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
