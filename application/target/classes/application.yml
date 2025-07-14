@@ -1,0 +1,60 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: demo-app
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: demo
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+app:
+  version: 1.0.0
+
+minio:
+  endpoint: http://localhost:9002
+  access-key: minioadmin
+  secret-key: minioadmin
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.9, 0.95, 0.99
+    tags:
+      application: ${spring.application.name}
+      environment: ${SPRING_PROFILES_ACTIVE:default}
+
+logging:
+  level:
+    com.example.demoapp: INFO
+    org.springframework: INFO
+    io.opentelemetry: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+  file:
+    name: logs/application.log

@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: demo-app-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: demo
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - demo-app-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: demo-app-minio
+    restart: unless-stopped
+    ports:
+      - "9002:9000"  # MinIO API
+      - "9003:9001"  # MinIO Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    networks:
+      - demo-app-network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 30s
+
+  # Spring Boot Application
+  demo-app:
+    build:
+      context: ./application
+      dockerfile: Dockerfile
+    container_name: demo-app-spring
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # MongoDB Configuration
+      SPRING_DATA_MONGODB_HOST: mongodb
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: demo
+      SPRING_DATA_MONGODB_USERNAME: demo_user
+      SPRING_DATA_MONGODB_PASSWORD: demo_password
+      
+      # MinIO Configuration
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      
+      # Application Configuration
+      SPRING_PROFILES_ACTIVE: docker
+      
+      # OpenTelemetry Configuration (optional)
+      OTEL_SERVICE_NAME: demo-app
+      OTEL_RESOURCE_ATTRIBUTES: service.name=demo-app,service.version=1.0.0
+    volumes:
+      - app_logs:/var/log
+    networks:
+      - demo-app-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  mongodb_data:
+    driver: local
+  minio_data:
+    driver: local
+  app_logs:
+    driver: local
+
+networks:
+  demo-app-network:
+    driver: bridge

@@ -1,0 +1,4 @@
+com/example/demoapp/domain/model/GreetingTest.class
+com/example/demoapp/domain/model/PostTest.class
+com/example/demoapp/application/usecase/GetGreetingUseCaseTest.class
+com/example/demoapp/domain/model/FileMetadataTest.class
