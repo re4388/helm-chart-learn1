@@ -1,0 +1,145 @@
+# Production values for demo-app
+# Override default values for production environment
+
+replicaCount: 3
+
+image:
+  repository: re4388/demo-app
+  pullPolicy: Always
+  tag: "latest"
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Production MongoDB configuration
+mongodb:
+  enabled: true
+  auth:
+    enabled: true
+    rootUser: admin
+    rootPassword: "CHANGE-ME-PRODUCTION-PASSWORD"
+    username: demo_user
+    password: "CHANGE-ME-PRODUCTION-PASSWORD"
+    database: demo
+  persistence:
+    enabled: true
+    size: 50Gi
+    storageClass: "fast-ssd" # Use appropriate storage class
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  metrics:
+    enabled: true
+
+# Production MinIO configuration
+minio:
+  enabled: true
+  auth:
+    rootUser: minioadmin
+    rootPassword: "CHANGE-ME-PRODUCTION-PASSWORD"
+  defaultBuckets: "demo-bucket,uploads,backups"
+  persistence:
+    enabled: true
+    size: 100Gi
+    storageClass: "fast-ssd" # Use appropriate storage class
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  metrics:
+    enabled: true
+
+# Production ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - host: demo-app.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: demo-app-tls
+      hosts:
+        - demo-app.yourdomain.com
+
+# Production environment variables
+env:
+  # MongoDB
+  SPRING_DATA_MONGODB_HOST: "demo-app-mongodb"
+  SPRING_DATA_MONGODB_PORT: "27017"
+  SPRING_DATA_MONGODB_DATABASE: "demo"
+  SPRING_DATA_MONGODB_USERNAME: "demo_user"
+  SPRING_DATA_MONGODB_PASSWORD: "CHANGE-ME-PRODUCTION-PASSWORD"
+
+  # MinIO
+  MINIO_ENDPOINT: "http://demo-app-minio:9000"
+  MINIO_ACCESS_KEY: "minioadmin"
+  MINIO_SECRET_KEY: "CHANGE-ME-PRODUCTION-PASSWORD"
+
+  # Application
+  SPRING_PROFILES_ACTIVE: "production"
+
+  # JVM settings for production
+  JAVA_OPTS: "-Xms512m -Xmx1g -XX:+UseG1GC -XX:+UseStringDeduplication"
+
+# Production health checks
+healthCheck:
+  enabled: true
+  livenessProbe:
+    httpGet:
+      path: /actuator/health/liveness
+      port: 8080
+    initialDelaySeconds: 120
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /actuator/health/readiness
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Pod disruption budget for high availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Network policies for security
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring

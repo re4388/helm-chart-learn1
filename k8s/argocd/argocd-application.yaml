@@ -1,0 +1,255 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app
+  namespace: argocd
+  labels:
+    app: demo-app
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # 項目名稱
+  project: default
+  
+  # Git 倉庫來源
+  source:
+    # GitHub 倉庫 URL
+    repoURL: https://github.com/re4388/helm-chart-learn1
+    
+    # 分支 - 使用 HEAD 來獲取最新提交
+    targetRevision: HEAD
+    
+    # Helm Chart 路徑
+    path: k8s/helm-chart/demo-app
+    
+    # Helm 配置
+    helm:
+      # Values 檔案
+      valueFiles:
+        - values.yaml
+      
+      # 參數覆蓋
+      parameters:
+        - name: image.tag
+          value: latest
+        - name: replicaCount
+          value: "2"
+        - name: resources.requests.memory
+          value: "512Mi"
+        - name: resources.requests.cpu
+          value: "250m"
+      
+      # 檔案參數
+      fileParameters:
+        - name: config.application.yml
+          path: config/application-prod.yml
+  
+  # 部署目標
+  destination:
+    # Kubernetes 集群
+    server: https://kubernetes.default.svc
+    
+    # 命名空間
+    namespace: demo-app
+  
+  # 同步策略
+  syncPolicy:
+    # 自動同步
+    automated:
+      # 自動修剪不需要的資源
+      prune: true
+      
+      # 自動修復偏移
+      selfHeal: true
+      
+      # 允許空提交
+      allowEmpty: false
+    
+    # 同步選項
+    syncOptions:
+      # 自動建立命名空間
+      - CreateNamespace=true
+      
+      # 驗證資源
+      - Validate=true
+      
+      # 使用伺服器端應用
+      - ServerSideApply=true
+      
+      # 尊重忽略差異
+      - RespectIgnoreDifferences=true
+      
+      # 應用出錯時不同步
+      - ApplyOutOfSyncOnly=true
+    
+    # 重試策略
+    retry:
+      # 重試次數
+      limit: 5
+      
+      # 退避策略
+      backoff:
+        # 初始延遲
+        duration: 5s
+        
+        # 最大延遲
+        maxDuration: 3m0s
+        
+        # 退避因子
+        factor: 2
+  
+  # 忽略差異
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    
+    - group: ""
+      kind: Service
+      jsonPointers:
+        - /spec/clusterIP
+        - /spec/clusterIPs
+  
+  # 修訂歷史限制
+  revisionHistoryLimit: 10
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app-infrastructure
+  namespace: argocd
+  labels:
+    app: demo-app-infrastructure
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"  # 先部署基礎設施
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/re4388/helm-chart-learn1
+    targetRevision: main
+    path: k8s/infrastructure
+    
+    # 使用 Kustomize
+    kustomize:
+      images:
+        - mongo:7.0
+        - minio/minio:latest
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-app
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    
+    syncOptions:
+      - CreateNamespace=true
+      - Validate=true
+    
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        maxDuration: 1m0s
+        factor: 2
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: demo-app-project
+  namespace: argocd
+  labels:
+    project: demo-app
+spec:
+  # 項目描述
+  description: Demo Spring Boot Application Project
+  
+  # 來源倉庫
+  sourceRepos:
+    - https://github.com/re4388/helm-chart-learn1
+    - https://charts.bitnami.com/bitnami  # 用於 MongoDB, Redis 等
+    - https://helm.min.io/  # 用於 MinIO
+  
+  # 目標集群和命名空間
+  destinations:
+    - namespace: demo-app
+      server: https://kubernetes.default.svc
+    - namespace: demo-app-*
+      server: https://kubernetes.default.svc
+  
+  # 集群資源白名單
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+  
+  # 命名空間資源白名單
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+  
+  # 角色綁定
+  roles:
+    - name: developer
+      description: Developer role for demo-app
+      policies:
+        - p, proj:demo-app-project:developer, applications, get, demo-app-project/*, allow
+        - p, proj:demo-app-project:developer, applications, sync, demo-app-project/*, allow
+        - p, proj:demo-app-project:developer, applications, action/*, demo-app-project/*, allow
+        - p, proj:demo-app-project:developer, repositories, get, demo-app-project/*, allow
+      groups:
+        - demo-app-developers
+    
+    - name: admin
+      description: Admin role for demo-app
+      policies:
+        - p, proj:demo-app-project:admin, applications, *, demo-app-project/*, allow
+        - p, proj:demo-app-project:admin, repositories, *, demo-app-project/*, allow
+        - p, proj:demo-app-project:admin, clusters, *, demo-app-project/*, allow
+      groups:
+        - demo-app-admins
+  
+  # 同步視窗 (可選)
+  syncWindows:
+    - kind: allow
+      schedule: "0 9 * * 1-5"  # 週一到週五 9:00 AM
+      duration: 8h
+      applications:
+        - demo-app
+      manualSync: true
+    
+    - kind: deny
+      schedule: "0 0 * * 0,6"  # 週末
+      duration: 24h
+      applications:
+        - demo-app
+      manualSync: false

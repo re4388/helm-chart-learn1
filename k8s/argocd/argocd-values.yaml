@@ -1,0 +1,244 @@
+# ArgoCD Helm Chart Values
+# 針對 demo-app 項目的自定義配置
+
+global:
+  # 映像檔拉取策略
+  imagePullPolicy: IfNotPresent
+
+  # 安全上下文
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 999
+    fsGroup: 999
+
+# ArgoCD Server 配置
+server:
+  # 副本數
+  replicas: 1
+
+  # 資源限制
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  # 服務配置
+  service:
+    type: ClusterIP
+    port: 443
+    targetPort: 8080
+
+  # Ingress 配置 (可選)
+  ingress:
+    enabled: false
+    # 如果需要 Ingress，取消註解以下配置
+    # enabled: true
+    # className: nginx
+    # hosts:
+    #   - host: argocd.your-domain.com
+    #     paths:
+    #       - path: /
+    #         pathType: Prefix
+    # tls:
+    #   - secretName: argocd-server-tls
+    #     hosts:
+    #       - argocd.your-domain.com
+
+  # 額外的命令行參數
+  extraArgs:
+    - --insecure # 開發環境使用，生產環境請移除
+
+  # 配置管理
+  config:
+    # Git 倉庫配置
+    repositories: |
+      - type: git
+        url: https://github.com/re4388/helm-chart-learn1
+        name: demo-app-repo
+
+    # 應用程式配置
+    application.instanceLabelKey: argocd.argoproj.io/instance
+
+    # URL 配置
+    url: https://localhost:8080 # 根據您的環境調整
+
+    # OIDC 配置 (可選)
+    # oidc.config: |
+    #   name: OIDC
+    #   issuer: https://your-oidc-provider.com
+    #   clientId: argocd
+    #   clientSecret: $oidc.clientSecret
+    #   requestedScopes: ["openid", "profile", "email", "groups"]
+
+  # RBAC 配置
+  rbacConfig:
+    policy.default: role:readonly
+    policy.csv: |
+      p, role:admin, applications, *, */*, allow
+      p, role:admin, clusters, *, *, allow
+      p, role:admin, repositories, *, *, allow
+      p, role:developer, applications, *, demo-app/*, allow
+      p, role:developer, applications, sync, demo-app/*, allow
+      g, argocd-admins, role:admin
+
+# ArgoCD Application Controller 配置
+controller:
+  # 副本數
+  replicas: 1
+
+  # 資源限制
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+  # 應用程式同步配置
+  env:
+    - name: ARGOCD_CONTROLLER_REPLICAS
+      value: "1"
+
+  # 度量指標
+  metrics:
+    enabled: true
+    service:
+      type: ClusterIP
+      port: 8082
+
+# ArgoCD Repo Server 配置
+repoServer:
+  # 副本數
+  replicas: 1
+
+  # 資源限制
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  # 度量指標
+  metrics:
+    enabled: true
+    service:
+      type: ClusterIP
+      port: 8084
+
+# ArgoCD Redis 配置
+redis:
+  # 啟用 Redis
+  enabled: true
+
+  # 資源限制
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# ArgoCD Dex Server 配置 (OIDC)
+dex:
+  # 停用 Dex (如果不需要 OIDC)
+  enabled: false
+
+# 通知配置
+notifications:
+  # 啟用通知
+  enabled: true
+
+  # 資源限制
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  # 通知配置
+  notifiers:
+    service.slack: |
+      token: $slack-token
+      username: ArgoCD
+      channel: deployments
+      title: "{{.app.metadata.name}}"
+      text: "Application {{.app.metadata.name}} is now {{.app.status.sync.status}}."
+
+# ApplicationSet Controller 配置
+applicationSet:
+  # 啟用 ApplicationSet
+  enabled: true
+
+  # 資源限制
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# 全域配置
+configs:
+  # 密鑰管理
+  secret:
+    # 建立密鑰
+    createSecret: true
+
+    # GitHub Webhook 密鑰 (可選)
+    # githubSecret: "your-webhook-secret"
+
+    # GitLab Webhook 密鑰 (可選)
+    # gitlabSecret: "your-webhook-secret"
+
+  # 配置映射
+  cm:
+    # 應用程式配置
+    application.instanceLabelKey: argocd.argoproj.io/instance
+
+    # 伺服器配置
+    server.rbac.log.enforce.enable: "true"
+
+    # 同步配置
+    timeout.reconciliation: 180s
+    timeout.hard.reconciliation: 0s
+
+    # 資源排除
+    resource.exclusions: |
+      - apiGroups:
+        - cilium.io
+        kinds:
+        - CiliumIdentity
+        clusters:
+        - "*"
+
+    # 資源自定義
+    resource.customizations: |
+      networking.k8s.io/Ingress:
+        health.lua: |
+          hs = {}
+          hs.status = "Healthy"
+          return hs
+
+# 監控配置
+metrics:
+  # 啟用 Prometheus 度量指標
+  enabled: true
+
+  # ServiceMonitor 配置 (如果使用 Prometheus Operator)
+  serviceMonitor:
+    enabled: false
+    # 如果需要 ServiceMonitor，取消註解以下配置
+    # enabled: true
+    # selector:
+    #   prometheus: kube-prometheus
+    # namespace: monitoring

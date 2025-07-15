@@ -1,0 +1,203 @@
+# Default values for demo-app
+# This is a YAML-formatted file.
+
+replicaCount: 1
+
+image:
+  repository: your-dockerhub-username/demo-app
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 2000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: demo-app.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Application specific configuration
+app:
+  name: demo-app
+  version: "1.0.0"
+  profile: "kubernetes"
+
+# Health checks
+healthCheck:
+  enabled: true
+  livenessProbe:
+    httpGet:
+      path: /actuator/health/liveness
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /actuator/health/readiness
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# MongoDB configuration
+mongodb:
+  enabled: true
+  auth:
+    enabled: true
+    rootUser: admin
+    rootPassword: "admin123"
+    username: demo_user
+    password: "demo_password"
+    database: demo
+  persistence:
+    enabled: true
+    size: 8Gi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# MinIO configuration
+minio:
+  enabled: true
+  auth:
+    rootUser: minioadmin
+    rootPassword: "minioadmin123"
+  defaultBuckets: "demo-bucket"
+  persistence:
+    enabled: true
+    size: 10Gi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  service:
+    type: ClusterIP
+    ports:
+      api: 9000
+      console: 9001
+
+# Environment variables for the application
+env:
+  # MongoDB
+  SPRING_DATA_MONGODB_HOST: "demo-app-mongodb"
+  SPRING_DATA_MONGODB_PORT: "27017"
+  SPRING_DATA_MONGODB_DATABASE: "demo"
+  SPRING_DATA_MONGODB_USERNAME: "demo_user"
+  SPRING_DATA_MONGODB_PASSWORD: "demo_password"
+  
+  # MinIO
+  MINIO_ENDPOINT: "http://demo-app-minio:9000"
+  MINIO_ACCESS_KEY: "minioadmin"
+  MINIO_SECRET_KEY: "minioadmin123"
+  
+  # Application
+  SPRING_PROFILES_ACTIVE: "kubernetes"
+  
+  # Observability
+  OTEL_SERVICE_NAME: "demo-app"
+  OTEL_RESOURCE_ATTRIBUTES: "service.name=demo-app,service.version=1.0.0"
+
+# ConfigMap for application configuration
+configMap:
+  enabled: true
+  data:
+    application.yml: |
+      server:
+        port: 8080
+      spring:
+        application:
+          name: demo-app
+        data:
+          mongodb:
+            host: ${SPRING_DATA_MONGODB_HOST}
+            port: ${SPRING_DATA_MONGODB_PORT}
+            database: ${SPRING_DATA_MONGODB_DATABASE}
+            username: ${SPRING_DATA_MONGODB_USERNAME}
+            password: ${SPRING_DATA_MONGODB_PASSWORD}
+            authentication-database: ${SPRING_DATA_MONGODB_DATABASE}
+        servlet:
+          multipart:
+            max-file-size: 100MB
+            max-request-size: 100MB
+      minio:
+        endpoint: ${MINIO_ENDPOINT}
+        access-key: ${MINIO_ACCESS_KEY}
+        secret-key: ${MINIO_SECRET_KEY}
+      management:
+        endpoints:
+          web:
+            exposure:
+              include: health,info,metrics,prometheus
+        endpoint:
+          health:
+            show-details: always
+            probes:
+              enabled: true
+        metrics:
+          export:
+            prometheus:
+              enabled: true

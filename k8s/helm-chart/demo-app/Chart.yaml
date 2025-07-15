@@ -1,0 +1,30 @@
+apiVersion: v2
+name: demo-app
+description: A Helm chart for Spring Boot demo application with MongoDB and MinIO
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+dependencies:
+  - name: mongodb
+    version: "13.18.5"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: mongodb.enabled
+  - name: minio
+    version: "12.10.0"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: minio.enabled
+
+keywords:
+  - spring-boot
+  - mongodb
+  - minio
+  - microservice
+
+maintainers:
+  - name: Your Name
+    email: your.email@example.com
+
+home: https://github.com/re4388/helm-chart-learn1
+sources:
+  - https://github.com/re4388/helm-chart-learn1
