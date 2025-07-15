@@ -1,4 +1,4 @@
-name: CI/CD 管道
+name: CI/CD 管道 - simple
 
 on:
   push:
