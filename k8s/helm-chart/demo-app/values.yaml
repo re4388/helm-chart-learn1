@@ -125,12 +125,10 @@ minio:
 
 # Environment variables for the application
 env:
-  # MongoDB
+  # MongoDB - 無認證配置
   SPRING_DATA_MONGODB_HOST: "demo-app-mongodb"
   SPRING_DATA_MONGODB_PORT: "27017"
   SPRING_DATA_MONGODB_DATABASE: "demo"
-  SPRING_DATA_MONGODB_USERNAME: "demo_user"
-  SPRING_DATA_MONGODB_PASSWORD: "demo_password"
   
   # MinIO
   MINIO_ENDPOINT: "http://demo-app-minio:9000"
