@@ -91,9 +91,11 @@ mongodb:
     requests:
       cpu: 250m
       memory: 256Mi
-  # 使用穩定的 MongoDB 版本
+  # 使用官方 MongoDB image 避免 CPU 架構問題
   image:
-    tag: "6.0"
+    registry: docker.io
+    repository: mongo
+    tag: "5.0"
   # 添加平台相容性設定
   podSecurityContext:
     enabled: true
