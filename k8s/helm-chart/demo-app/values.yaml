@@ -91,9 +91,9 @@ mongodb:
     requests:
       cpu: 250m
       memory: 256Mi
-  # 使用更相容的 MongoDB 版本
+  # 使用穩定的 MongoDB 版本
   image:
-    tag: "4.4.18-debian-11-r25"
+    tag: "6.0"
   # 添加平台相容性設定
   podSecurityContext:
     enabled: true
