@@ -32,6 +32,8 @@ spec:
       
       # 參數覆蓋
       parameters:
+        - name: image.repository
+          value: "re4388/demo-app"
         - name: image.tag
           value: latest
         - name: replicaCount
@@ -41,10 +43,6 @@ spec:
         - name: resources.requests.cpu
           value: "250m"
       
-      # 檔案參數
-      fileParameters:
-        - name: config.application.yml
-          path: config/application-prod.yml
   
   # 部署目標
   destination:
