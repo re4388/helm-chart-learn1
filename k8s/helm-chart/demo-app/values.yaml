@@ -75,12 +75,7 @@ healthCheck:
 mongodb:
   enabled: true
   auth:
-    enabled: true
-    rootUser: admin
-    rootPassword: "admin123"
-    username: demo_user
-    password: "demo_password"
-    database: demo
+    enabled: false
   persistence:
     enabled: true
     size: 8Gi
