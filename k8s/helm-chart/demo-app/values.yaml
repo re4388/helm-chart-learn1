@@ -75,7 +75,7 @@ healthCheck:
 mongodb:
   enabled: true
   auth:
-    enabled: false
+    enabled: true
   persistence:
     enabled: true
     size: 8Gi
@@ -124,6 +124,8 @@ env:
   SPRING_DATA_MONGODB_HOST: "demo-app-mongodb"
   SPRING_DATA_MONGODB_PORT: "27017"
   SPRING_DATA_MONGODB_DATABASE: "demo"
+  SPRING_DATA_MONGODB_USERNAME: "demo_user"
+  SPRING_DATA_MONGODB_PASSWORD: "demo_password"
   
   # MinIO
   MINIO_ENDPOINT: "http://demo-app-minio:9000"

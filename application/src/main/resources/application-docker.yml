@@ -39,9 +39,6 @@ management:
     prometheus:
       enabled: true
   metrics:
-    export:
-      prometheus:
-        enabled: true
     distribution:
       percentiles-histogram:
         http.server.requests: true
@@ -50,14 +47,13 @@ management:
     tags:
       application: ${spring.application.name}
       environment: ${SPRING_PROFILES_ACTIVE:docker}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 logging:
   level:
     com.example.demoapp: INFO
     org.springframework: INFO
     io.opentelemetry: INFO
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
-  file:
-    name: /var/log/application.log
