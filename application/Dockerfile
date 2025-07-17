@@ -18,7 +18,9 @@ COPY target/demo-app-*.jar app.jar
 # Create log directory
 RUN mkdir -p /var/log && chmod 755 /var/log
 
+# 創建日誌目錄
 RUN mkdir -p logs && chmod 755 logs
+
 # Expose port
 EXPOSE 8080
 

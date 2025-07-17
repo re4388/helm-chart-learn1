@@ -53,6 +53,9 @@ management:
         enabled: true
 
 logging:
+  file:
+    path: logs
+    name: logs/application.log
   level:
     com.example.demoapp: INFO
     org.springframework: INFO
