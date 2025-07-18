@@ -23,7 +23,7 @@ podSecurityContext:
 securityContext:
   capabilities:
     drop:
-    - ALL
+      - ALL
   readOnlyRootFilesystem: false
   runAsNonRoot: true
   runAsUser: 1000
@@ -126,18 +126,15 @@ env:
   SPRING_DATA_MONGODB_DATABASE: "demo"
   SPRING_DATA_MONGODB_USERNAME: "demo_user"
   SPRING_DATA_MONGODB_PASSWORD: "demo_password"
-  
+
   # MinIO
   MINIO_ENDPOINT: "http://demo-app-minio:9000"
   MINIO_ACCESS_KEY: "minioadmin"
   MINIO_SECRET_KEY: "minioadmin123"
-  
+
   # Application
   SPRING_PROFILES_ACTIVE: "kubernetes"
-  
-  # 修正日誌路徑
-  LOG_FILE: "/tmp/application.log"
-  
+
   # Observability
   OTEL_SERVICE_NAME: "demo-app"
   OTEL_RESOURCE_ATTRIBUTES: "service.name=demo-app,service.version=1.0.0"
@@ -184,4 +181,4 @@ configMap:
               enabled: true
       logging:
         file:
-          name: ${LOG_FILE:/tmp/application.log}
+          name: /tmp/application.log
