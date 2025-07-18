@@ -47,6 +47,8 @@ spec:
             - name: config
               mountPath: /app/config
               readOnly: true
+            - name: logs-volume
+              mountPath: /app/logs
           {{- end }}
           {{- if .Values.healthCheck.enabled }}
           livenessProbe:
@@ -61,6 +63,8 @@ spec:
         - name: config
           configMap:
             name: {{ include "demo-app.fullname" . }}-config
+        - name: logs-volume
+          emptyDir: {}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

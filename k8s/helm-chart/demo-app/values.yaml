@@ -71,11 +71,11 @@ healthCheck:
     timeoutSeconds: 5
     failureThreshold: 3
 
-# MongoDB configuration - 修正 CPU 架構問題
+# MongoDB configuration - Fixed for official MongoDB image
 mongodb:
   enabled: true
   auth:
-    enabled: true
+    enabled: false  # Disable auth for simplicity, can be enabled later
   persistence:
     enabled: true
     size: 8Gi
@@ -86,19 +86,20 @@ mongodb:
     requests:
       cpu: 250m
       memory: 256Mi
-  # 使用官方 MongoDB image 避免 CPU 架構問題
+  # Use official MongoDB image with correct settings
   image:
     registry: docker.io
     repository: mongo
-    tag: "5.0"
-  # 添加平台相容性設定
+    tag: "7.0"
+  # Correct security context for official MongoDB image
   podSecurityContext:
     enabled: true
-    fsGroup: 1001
+    fsGroup: 999  # MongoDB user group
   containerSecurityContext:
     enabled: true
-    runAsUser: 1001
+    runAsUser: 999  # MongoDB user ID
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
 
 # MinIO configuration
 minio:
@@ -120,12 +121,13 @@ minio:
 
 # Environment variables for the application
 env:
-  # MongoDB - 無認證配置
+  # MongoDB - No authentication configuration
   SPRING_DATA_MONGODB_HOST: "demo-app-mongodb"
   SPRING_DATA_MONGODB_PORT: "27017"
   SPRING_DATA_MONGODB_DATABASE: "demo"
-  SPRING_DATA_MONGODB_USERNAME: "demo_user"
-  SPRING_DATA_MONGODB_PASSWORD: "demo_password"
+  # Remove username/password since auth is disabled
+  # SPRING_DATA_MONGODB_USERNAME: "demo_user"
+  # SPRING_DATA_MONGODB_PASSWORD: "demo_password"
 
   # MinIO
   MINIO_ENDPOINT: "http://demo-app-minio:9000"
@@ -154,9 +156,10 @@ configMap:
             host: ${SPRING_DATA_MONGODB_HOST}
             port: ${SPRING_DATA_MONGODB_PORT}
             database: ${SPRING_DATA_MONGODB_DATABASE}
-            username: ${SPRING_DATA_MONGODB_USERNAME}
-            password: ${SPRING_DATA_MONGODB_PASSWORD}
-            authentication-database: ${SPRING_DATA_MONGODB_DATABASE}
+            # No authentication needed
+            # username: ${SPRING_DATA_MONGODB_USERNAME}
+            # password: ${SPRING_DATA_MONGODB_PASSWORD}
+            # authentication-database: ${SPRING_DATA_MONGODB_DATABASE}
         servlet:
           multipart:
             max-file-size: 100MB
@@ -180,5 +183,7 @@ configMap:
             prometheus:
               enabled: true
       logging:
-        file:
-          name: /tmp/application.log
+        level:
+          root: INFO
+        pattern:
+          console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
