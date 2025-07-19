@@ -38,7 +38,7 @@ spec:
       parameters:
         - name: image.repository
           value: "re4388/demo-app"
-        
+
         - name: replicaCount
           value: "2"
         - name: resources.requests.memory
