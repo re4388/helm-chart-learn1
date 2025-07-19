@@ -35,7 +35,7 @@ spec:
         - name: image.repository
           value: "re4388/demo-app"
         - name: image.tag
-          value: "main-024aa6e"
+          value: "main-2e4c925"
         - name: replicaCount
           value: "2"
         - name: resources.requests.memory
