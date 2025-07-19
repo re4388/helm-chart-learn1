@@ -4,7 +4,7 @@ replicaCount: 1
 image:
   repository: re4388/demo-app
   pullPolicy: IfNotPresent
-  tag: "main-cd055d2"
+  tag: "main-024aa6e"
 
 imagePullSecrets: []
 nameOverride: ""
