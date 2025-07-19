@@ -7,6 +7,10 @@ metadata:
     app: demo-app
   annotations:
     argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/image-updater.argocd-image-updater: enable
+    argocd.argoproj.io/image-updater.images: demo-app=re4388/demo-app
+    argocd.argoproj.io/image-updater.demo-app.update-strategy: digest
+    argocd.argoproj.io/image-updater.demo-app.helm.image-digest: image.digest
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -34,8 +38,7 @@ spec:
       parameters:
         - name: image.repository
           value: "re4388/demo-app"
-        - name: image.tag
-          value: "main-c84334e"
+        
         - name: replicaCount
           value: "2"
         - name: resources.requests.memory
