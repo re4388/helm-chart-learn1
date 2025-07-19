@@ -47,6 +47,13 @@ management:
       prometheus:
         enabled: true
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
 logging:
   file:
     name: /tmp/application.log
