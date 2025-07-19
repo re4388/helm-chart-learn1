@@ -3,6 +3,12 @@ package com.example.demoapp.adapter.web.controller;
 import com.example.demoapp.infrastructure.observability.MetricsService;
 import com.example.demoapp.infrastructure.observability.TracingService;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +21,7 @@ import java.util.Random;
  * Controller to demonstrate observability features
  * 展示可觀測性功能的控制器
  */
+@Tag(name = "可觀測性", description = "提供生成範例指標、模擬追蹤和錯誤的端點")
 @RestController
 @RequestMapping("/api/observability")
 public class ObservabilityController {
@@ -38,8 +45,11 @@ public class ObservabilityController {
      * Endpoint to generate sample metrics
      * 生成範例指標的端點
      */
+    @Operation(summary = "生成範例指標", description = "生成指定數量的範例業務事件、檔案操作和貼文操作指標。")
+    @ApiResponse(responseCode = "200", description = "成功生成指標",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Map.class)))
     @PostMapping("/metrics/generate")
-    public Map<String, Object> generateMetrics(@RequestParam(defaultValue = "10") int count) {
+    public Map<String, Object> generateMetrics(@Parameter(description = "要生成的指標數量", example = "10") @RequestParam(defaultValue = "10") int count) {
         logger.info("Generating {} sample metrics", count);
         
         return tracingService.traceBusinessOperation("generate-metrics", "observability", "demo", () -> {
@@ -76,8 +86,12 @@ public class ObservabilityController {
      * Endpoint to simulate slow operations for tracing
      * 模擬慢操作以進行追蹤的端點
      */
+    @Operation(summary = "模擬慢操作", description = "模擬一個帶有指定延遲的慢操作，用於追蹤測試。")
+    @ApiResponse(responseCode = "200", description = "慢操作完成",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Map.class)))
+    @ApiResponse(responseCode = "500", description = "操作中斷")
     @GetMapping("/trace/slow-operation")
-    public Map<String, Object> slowOperation(@RequestParam(defaultValue = "1000") int delayMs) {
+    public Map<String, Object> slowOperation(@Parameter(description = "模擬延遲的毫秒數", example = "1000") @RequestParam(defaultValue = "1000") int delayMs) {
         logger.info("Starting slow operation with delay: {}ms", delayMs);
         
         return tracingService.traceBusinessOperation("slow-operation", "demo", "test", () -> {
@@ -112,8 +126,12 @@ public class ObservabilityController {
      * Endpoint to simulate errors for error tracking
      * 模擬錯誤以進行錯誤追蹤的端點
      */
+    @Operation(summary = "模擬錯誤", description = "模擬一個錯誤條件，用於錯誤追蹤測試。")
+    @ApiResponse(responseCode = "200", description = "錯誤模擬成功 (未觸發錯誤)",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Map.class)))
+    @ApiResponse(responseCode = "500", description = "模擬錯誤觸發")
     @GetMapping("/trace/error-simulation")
-    public Map<String, Object> errorSimulation(@RequestParam(defaultValue = "false") boolean shouldFail) {
+    public Map<String, Object> errorSimulation(@Parameter(description = "是否觸發錯誤", example = "true") @RequestParam(defaultValue = "false") boolean shouldFail) {
         logger.info("Starting error simulation, shouldFail: {}", shouldFail);
         
         return tracingService.traceBusinessOperation("error-simulation", "demo", "test", () -> {
@@ -138,6 +156,9 @@ public class ObservabilityController {
      * Endpoint to get current metrics summary
      * 取得當前指標摘要的端點
      */
+    @Operation(summary = "獲取當前指標摘要", description = "返回應用程式的當前指標摘要，包括 JVM、CPU 和自定義指標。")
+    @ApiResponse(responseCode = "200", description = "成功獲取指標摘要",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Map.class)))
     @GetMapping("/metrics/summary")
     public Map<String, Object> getMetricsSummary() {
         logger.debug("Retrieving metrics summary");

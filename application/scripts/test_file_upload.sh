@@ -6,7 +6,7 @@
 set -e  # Exit on any error
 
 # Configuration
-API_BASE_URL="http://localhost:8080"
+API_BASE_URL="http://localhost:8081"
 BUCKET_NAME="${1:-test-bucket}"
 UPLOADER_NAME="${2:-test-user}"
 
