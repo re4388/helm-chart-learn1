@@ -122,3 +122,30 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASS }}
           repository: ${{ env.DOCKER_IMAGE_NAME }}
           readme-filepath: ./application/README.md
+
+      - name: 更新 ArgoCD 映像標籤
+        run: |
+          # 取得短版本的 commit hash
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          NEW_TAG="main-${SHORT_SHA}"
+          
+          echo "更新映像標籤為: $NEW_TAG"
+          
+          # 更新 ArgoCD 應用程式配置
+          sed -i "s/value: \"main-[a-f0-9]*\"/value: \"$NEW_TAG\"/" k8s/argocd/argocd-application.yaml
+          
+          # 更新 Helm values 檔案
+          sed -i "s/tag: \"main-[a-f0-9]*\"/tag: \"$NEW_TAG\"/" k8s/helm-chart/demo-app/values.yaml
+          
+          # 更新生產環境 values 檔案
+          if [ -f k8s/helm-chart/demo-app/values-production.yaml ]; then
+            sed -i "s/tag: \"main-[a-f0-9]*\"/tag: \"$NEW_TAG\"/" k8s/helm-chart/demo-app/values-production.yaml
+          fi
+
+      - name: 提交並推送映像標籤更新
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add k8s/argocd/argocd-application.yaml k8s/helm-chart/demo-app/values.yaml k8s/helm-chart/demo-app/values-production.yaml
+          git commit -m "chore: update image tag to main-$(echo ${{ github.sha }} | cut -c1-7)" || exit 0
+          git push
