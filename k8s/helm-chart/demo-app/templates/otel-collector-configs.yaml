@@ -26,10 +26,13 @@ data:
         attributes:
           - key: service.name
             value: "{{ .Values.otelCollector.serviceName | default "demo-app" }}"
+            action: insert
           - key: service.version
             value: "{{ .Chart.AppVersion }}"
+            action: insert
           - key: deployment.environment
             value: "{{ .Values.otelCollector.environment | default "kubernetes" }}"
+            action: insert
 
     exporters:
       # Logging exporter (for debugging)
