@@ -8,7 +8,7 @@ on:
 
 # 新增權限設定
 permissions:
-  contents: read
+  contents: write     # 需要寫入權限來推送映像標籤更新
   actions: read
   checks: write
   pull-requests: write
