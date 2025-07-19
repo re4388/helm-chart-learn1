@@ -1,0 +1,124 @@
+# Prometheus Helm Chart Values
+# 用於監控 demo-app 的 JVM 指標
+
+# Prometheus Server 配置
+prometheus:
+  prometheusSpec:
+    # 資源配置
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 1Gi
+        cpu: 500m
+    
+    # 資料保留時間
+    retention: 30d
+    
+    # 儲存配置
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+    
+    # 額外的 scrape 配置
+    additionalScrapeConfigs:
+      - job_name: 'demo-app-direct'
+        static_configs:
+          - targets: ['demo-app.demo-app.svc.cluster.local:8080']
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 15s
+        scrape_timeout: 10s
+      
+      - job_name: 'demo-app-otel-collector'
+        static_configs:
+          - targets: ['demo-app-otel-collector.demo-app.svc.cluster.local:8889']
+        metrics_path: '/metrics'
+        scrape_interval: 15s
+        scrape_timeout: 10s
+
+# Grafana 配置
+grafana:
+  enabled: true
+  
+  # 管理員密碼
+  adminPassword: "admin123"
+  
+  # 資源配置
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 200m
+  
+  # 持久化儲存
+  persistence:
+    enabled: true
+    size: 5Gi
+  
+  # 預設資料源 (移除，使用 kube-prometheus-stack 的預設配置)
+  
+  # 預設 Dashboard
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+  
+  dashboards:
+    default:
+      # JVM Dashboard
+      jvm-dashboard:
+        gnetId: 4701
+        revision: 1
+        datasource: Prometheus
+      
+      # Spring Boot Dashboard
+      spring-boot-dashboard:
+        gnetId: 6756
+        revision: 1
+        datasource: Prometheus
+      
+      # Kubernetes Dashboard
+      kubernetes-dashboard:
+        gnetId: 315
+        revision: 3
+        datasource: Prometheus
+
+# AlertManager 配置
+alertmanager:
+  enabled: true
+  
+  alertmanagerSpec:
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 50m
+      limits:
+        memory: 256Mi
+        cpu: 100m
+
+# Node Exporter (收集節點指標)
+nodeExporter:
+  enabled: true
+
+# Kube State Metrics (收集 K8s 資源指標)
+kubeStateMetrics:
+  enabled: true
+
+# Service Monitor 配置 (自動發現服務)
+serviceMonitor:
+  enabled: true

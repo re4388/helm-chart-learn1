@@ -141,6 +141,68 @@ env:
   # Observability
   OTEL_SERVICE_NAME: "demo-app"
   OTEL_RESOURCE_ATTRIBUTES: "service.name=demo-app,service.version=1.0.0"
+  
+  # OpenTelemetry Java Agent Configuration
+  OTEL_JAVAAGENT_ENABLED: "true"
+  OTEL_INSTRUMENTATION_RUNTIME_METRICS_ENABLED: "true"
+  OTEL_INSTRUMENTATION_JVM_ENABLED: "true"
+  OTEL_INSTRUMENTATION_MICROMETER_ENABLED: "true"
+  OTEL_METRICS_EXPORTER: "prometheus"
+  OTEL_LOGS_EXPORTER: "none"
+  OTEL_TRACES_EXPORTER: "none"
+
+# OpenTelemetry Collector Configuration
+otelCollector:
+  enabled: true   # Set to true to enable OTel Collector
+  serviceName: "demo-app"
+  environment: "kubernetes"
+  
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: "0.91.0"
+    pullPolicy: IfNotPresent
+  
+  # Backend type: "local", "grafana-cloud", "datadog", "newrelic", "jaeger", "custom"
+  backend: "local"
+  
+  # Exporters to use based on backend
+  exporters: "logging,prometheus"
+  
+  # Grafana Cloud configuration
+  grafanaCloud:
+    prometheusUrl: ""  # e.g., https://prometheus-prod-01-eu-west-0.grafana.net/api/prom/push
+    basicAuth: ""      # base64 encoded username:password
+  
+  # Datadog configuration
+  datadog:
+    apiKey: ""
+    site: "datadoghq.com"  # or datadoghq.eu, us3.datadoghq.com, etc.
+  
+  # New Relic configuration
+  newrelic:
+    licenseKey: ""
+  
+  # Jaeger configuration
+  jaeger:
+    endpoint: "http://jaeger-collector:4317"
+    insecure: true
+  
+  # Custom OTLP endpoint configuration
+  custom:
+    endpoint: ""
+    insecure: true
+    headers: {}
+  
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  # Additional environment variables
+  env: []
 
 # ConfigMap for application configuration
 configMap:

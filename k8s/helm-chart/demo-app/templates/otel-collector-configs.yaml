@@ -1,0 +1,173 @@
+{{- if .Values.otelCollector.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "demo-app.fullname" . }}-otel-collector-config
+  labels:
+    {{- include "demo-app.labels" . | nindent 4 }}
+data:
+  otel-collector-config.yaml: |
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: 'demo-app-metrics'
+              static_configs:
+                - targets: ['{{ include "demo-app.fullname" . }}:{{ .Values.service.port }}']
+              metrics_path: '/actuator/prometheus'
+              scrape_interval: 15s
+              
+    processors:
+      batch:
+        timeout: 1s
+        send_batch_size: 1024
+      
+      resource:
+        attributes:
+          - key: service.name
+            value: "{{ .Values.otelCollector.serviceName | default "demo-app" }}"
+          - key: service.version
+            value: "{{ .Chart.AppVersion }}"
+          - key: deployment.environment
+            value: "{{ .Values.otelCollector.environment | default "kubernetes" }}"
+
+    exporters:
+      # Logging exporter (for debugging)
+      logging:
+        loglevel: info
+
+      # Prometheus exporter (for local Prometheus)
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+        
+      {{- if eq .Values.otelCollector.backend "grafana-cloud" }}
+      # Grafana Cloud
+      prometheusremotewrite:
+        endpoint: "{{ .Values.otelCollector.grafanaCloud.prometheusUrl }}"
+        headers:
+          Authorization: "Basic {{ .Values.otelCollector.grafanaCloud.basicAuth }}"
+      {{- end }}
+      
+      {{- if eq .Values.otelCollector.backend "datadog" }}
+      # Datadog
+      datadog:
+        api:
+          key: "{{ .Values.otelCollector.datadog.apiKey }}"
+          site: "{{ .Values.otelCollector.datadog.site | default "datadoghq.com" }}"
+        hostname: "demo-app-k8s"
+      {{- end }}
+      
+      {{- if eq .Values.otelCollector.backend "newrelic" }}
+      # New Relic
+      otlphttp:
+        endpoint: "https://otlp.nr-data.net:4318"
+        headers:
+          api-key: "{{ .Values.otelCollector.newrelic.licenseKey }}"
+      {{- end }}
+      
+      {{- if eq .Values.otelCollector.backend "jaeger" }}
+      # Jaeger
+      otlp:
+        endpoint: "{{ .Values.otelCollector.jaeger.endpoint }}"
+        tls:
+          insecure: {{ .Values.otelCollector.jaeger.insecure | default true }}
+      {{- end }}
+      
+      {{- if eq .Values.otelCollector.backend "custom" }}
+      # Custom OTLP endpoint
+      otlp:
+        endpoint: "{{ .Values.otelCollector.custom.endpoint }}"
+        tls:
+          insecure: {{ .Values.otelCollector.custom.insecure | default true }}
+        {{- if .Values.otelCollector.custom.headers }}
+        headers:
+          {{- toYaml .Values.otelCollector.custom.headers | nindent 10 }}
+        {{- end }}
+      {{- end }}
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          processors: [batch, resource]
+          exporters: [{{ .Values.otelCollector.exporters }}]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "demo-app.fullname" . }}-otel-collector
+  labels:
+    {{- include "demo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "demo-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: otel-collector
+  template:
+    metadata:
+      labels:
+        {{- include "demo-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: "{{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}"
+          imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
+          command:
+            - /otelcol-contrib
+            - --config=/etc/otel-collector-config.yaml
+          volumeMounts:
+            - name: otel-collector-config-vol
+              mountPath: /etc/otel-collector-config.yaml
+              subPath: otel-collector-config.yaml
+          ports:
+            - name: prometheus
+              containerPort: 8889
+              protocol: TCP
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+            - name: otlp-http
+              containerPort: 4318
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.otelCollector.resources | nindent 12 }}
+          {{- if .Values.otelCollector.env }}
+          env:
+            {{- toYaml .Values.otelCollector.env | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: otel-collector-config-vol
+          configMap:
+            name: {{ include "demo-app.fullname" . }}-otel-collector-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "demo-app.fullname" . }}-otel-collector
+  labels:
+    {{- include "demo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8889
+      targetPort: prometheus
+      protocol: TCP
+      name: prometheus
+    - port: 4317
+      targetPort: otlp-grpc
+      protocol: TCP
+      name: otlp-grpc
+    - port: 4318
+      targetPort: otlp-http
+      protocol: TCP
+      name: otlp-http
+  selector:
+    {{- include "demo-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+{{- end }}

@@ -75,6 +75,14 @@ services:
       # OpenTelemetry Configuration (optional)
       OTEL_SERVICE_NAME: demo-app
       OTEL_RESOURCE_ATTRIBUTES: service.name=demo-app,service.version=1.0.0
+      # OpenTelemetry Java Agent Configuration
+      OTEL_JAVAAGENT_ENABLED: "true"
+      OTEL_INSTRUMENTATION_RUNTIME_METRICS_ENABLED: "true"
+      OTEL_INSTRUMENTATION_JVM_ENABLED: "true"
+      OTEL_INSTRUMENTATION_MICROMETER_ENABLED: "true"
+      OTEL_METRICS_EXPORTER: "prometheus"
+      OTEL_LOGS_EXPORTER: "none"
+      OTEL_TRACES_EXPORTER: "none"
     volumes:
       - app_logs:/var/log
     networks:

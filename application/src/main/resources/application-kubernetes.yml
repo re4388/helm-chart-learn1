@@ -61,3 +61,4 @@ logging:
     com.example.demoapp: INFO
     org.springframework: INFO
     io.opentelemetry: INFO
+    io.opentelemetry.javaagent: INFO
