@@ -16,16 +16,23 @@ VALUES_PROD_FILE="k8s/helm-chart/demo-app/values-production.yaml"
 
 echo "更新映像標籤為: $NEW_TAG"
 
-# 更新 ArgoCD 應用程式配置
-sed -i "s/value: \"main-[a-f0-9]*\"/value: \"$NEW_TAG\"/" $ARGOCD_APP_FILE
+# 更新 ArgoCD 應用程式配置 - 使用精確的正則表達式
+sed -i "s/value: \"main-[a-f0-9]\{7\}\"/value: \"$NEW_TAG\"/" $ARGOCD_APP_FILE
 
-# 更新 Helm values 檔案
-sed -i "s/tag: \"main-[a-f0-9]*\"/tag: \"$NEW_TAG\"/" $VALUES_FILE
+# 更新 Helm values 檔案 - 使用精確的正則表達式
+sed -i "s/tag: \"main-[a-f0-9]\{7\}\"/tag: \"$NEW_TAG\"/" $VALUES_FILE
 
 # 更新生產環境 values 檔案
 if [ -f $VALUES_PROD_FILE ]; then
-    sed -i "s/tag: \"main-[a-f0-9]*\"/tag: \"$NEW_TAG\"/" $VALUES_PROD_FILE
+    sed -i "s/tag: \"main-[a-f0-9]\{7\}\"/tag: \"$NEW_TAG\"/" $VALUES_PROD_FILE
 fi
+
+# 驗證更新結果
+echo "=== 更新結果驗證 ==="
+echo "ArgoCD 配置:"
+grep -n "image.tag" $ARGOCD_APP_FILE
+echo "Helm values:"
+grep -n "tag:" $VALUES_FILE
 
 echo "映像標籤已更新完成！"
 echo "請提交變更並推送到 Git 倉庫以觸發 ArgoCD 同步。"

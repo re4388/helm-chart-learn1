@@ -130,17 +130,25 @@ jobs:
           NEW_TAG="main-${SHORT_SHA}"
           
           echo "更新映像標籤為: $NEW_TAG"
+          echo "當前 commit SHA: ${{ github.sha }}"
+          echo "短版本 SHA: $SHORT_SHA"
           
-          # 更新 ArgoCD 應用程式配置
-          sed -i "s/value: \"main-[a-f0-9]*\"/value: \"$NEW_TAG\"/" k8s/argocd/argocd-application.yaml
+          # 更新 ArgoCD 應用程式配置 - 使用更精確的正則表達式
+          sed -i "s/value: \"main-[a-f0-9]\{7\}\"/value: \"$NEW_TAG\"/" k8s/argocd/argocd-application.yaml
           
-          # 更新 Helm values 檔案
-          sed -i "s/tag: \"main-[a-f0-9]*\"/tag: \"$NEW_TAG\"/" k8s/helm-chart/demo-app/values.yaml
+          # 更新 Helm values 檔案 - 使用更精確的正則表達式
+          sed -i "s/tag: \"main-[a-f0-9]\{7\}\"/tag: \"$NEW_TAG\"/" k8s/helm-chart/demo-app/values.yaml
           
           # 更新生產環境 values 檔案
           if [ -f k8s/helm-chart/demo-app/values-production.yaml ]; then
-            sed -i "s/tag: \"main-[a-f0-9]*\"/tag: \"$NEW_TAG\"/" k8s/helm-chart/demo-app/values-production.yaml
+            sed -i "s/tag: \"main-[a-f0-9]\{7\}\"/tag: \"$NEW_TAG\"/" k8s/helm-chart/demo-app/values-production.yaml
           fi
+          
+          # 驗證更新結果
+          echo "=== ArgoCD 配置更新結果 ==="
+          grep -n "image.tag" k8s/argocd/argocd-application.yaml
+          echo "=== Helm values 更新結果 ==="
+          grep -n "tag:" k8s/helm-chart/demo-app/values.yaml
 
       - name: 提交並推送映像標籤更新
         run: |
