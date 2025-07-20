@@ -5,6 +5,8 @@ import com.example.demoapp.domain.model.FileMetadata;
 import com.example.demoapp.domain.port.FileStorageService;
 import com.example.demoapp.infrastructure.observability.MetricsService;
 import com.example.demoapp.infrastructure.observability.TracingService;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.minio.*;
 import io.minio.messages.Item;
@@ -30,13 +32,24 @@ public class MinioFileStorageService implements FileStorageService {
     private final MinioClient minioClient;
     private final MetricsService metricsService;
     private final TracingService tracingService;
+    private final Counter minioUploadsTotal;
+    private final Counter minioDownloadsTotal;
     
     public MinioFileStorageService(MinioClient minioClient, 
                                   MetricsService metricsService,
-                                  TracingService tracingService) {
+                                  TracingService tracingService,
+                                  MeterRegistry meterRegistry) {
         this.minioClient = minioClient;
         this.metricsService = metricsService;
         this.tracingService = tracingService;
+        this.minioUploadsTotal = Counter.builder("minio_operations_total")
+            .tag("operation", "upload")
+            .description("Total number of MinIO file uploads")
+            .register(meterRegistry);
+        this.minioDownloadsTotal = Counter.builder("minio_operations_total")
+            .tag("operation", "download")
+            .description("Total number of MinIO file downloads")
+            .register(meterRegistry);
     }
     
     @Override
@@ -71,6 +84,7 @@ public class MinioFileStorageService implements FileStorageService {
                 
                 metricsService.stopMinioTimer(sample, "upload", "success");
                 metricsService.recordFileOperation("upload", "success", size);
+                minioUploadsTotal.increment();
                 
                 logger.info("Successfully uploaded file: bucket={}, fileName={}, size={}", 
                            bucketName, fileName, size);
@@ -110,7 +124,7 @@ public class MinioFileStorageService implements FileStorageService {
                     .object(fileName)
                     .build()
             );
-            
+            minioDownloadsTotal.increment();
             return Optional.of(new FileData(metadataOpt.get(), inputStream));
             
         } catch (Exception e) {

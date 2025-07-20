@@ -31,7 +31,7 @@ public class ObservabilityController {
     private final MetricsService metricsService;
     private final TracingService tracingService;
     private final MeterRegistry meterRegistry;
-    private final Random random = new Random();
+    
     
     public ObservabilityController(MetricsService metricsService,
                                   TracingService tracingService,
@@ -41,46 +41,7 @@ public class ObservabilityController {
         this.meterRegistry = meterRegistry;
     }
     
-    /**
-     * Endpoint to generate sample metrics
-     * 生成範例指標的端點
-     */
-    @Operation(summary = "生成範例指標", description = "生成指定數量的範例業務事件、檔案操作和貼文操作指標。")
-    @ApiResponse(responseCode = "200", description = "成功生成指標",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Map.class)))
-    @PostMapping("/metrics/generate")
-    public Map<String, Object> generateMetrics(@Parameter(description = "要生成的指標數量", example = "10") @RequestParam(defaultValue = "10") int count) {
-        logger.info("Generating {} sample metrics", count);
-        
-        return tracingService.traceBusinessOperation("generate-metrics", "observability", "demo", () -> {
-            tracingService.addSpanAttribute("metrics.count", String.valueOf(count));
-            
-            for (int i = 0; i < count; i++) {
-                // Generate random business events
-                String eventType = getRandomEventType();
-                String category = getRandomCategory();
-                metricsService.recordBusinessEvent(eventType, category);
-                
-                // Generate random file operations
-                String fileOp = getRandomFileOperation();
-                String status = random.nextBoolean() ? "success" : "error";
-                long size = random.nextLong(1024 * 1024 * 10); // 0-10MB
-                metricsService.recordFileOperation(fileOp, status, size);
-                
-                // Generate random post operations
-                String postOp = getRandomPostOperation();
-                metricsService.recordPostOperation(postOp, status);
-            }
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("generated_metrics", count);
-            result.put("timestamp", System.currentTimeMillis());
-            result.put("status", "success");
-            
-            logger.info("Successfully generated {} metrics", count);
-            return result;
-        });
-    }
+    
     
     /**
      * Endpoint to simulate slow operations for tracing
@@ -198,23 +159,5 @@ public class ObservabilityController {
         });
     }
     
-    private String getRandomEventType() {
-        String[] events = {"user_login", "user_logout", "post_created", "post_updated", "file_uploaded", "file_downloaded"};
-        return events[random.nextInt(events.length)];
-    }
     
-    private String getRandomCategory() {
-        String[] categories = {"user_action", "content_management", "file_management", "system_event"};
-        return categories[random.nextInt(categories.length)];
-    }
-    
-    private String getRandomFileOperation() {
-        String[] operations = {"upload", "download", "delete", "list"};
-        return operations[random.nextInt(operations.length)];
-    }
-    
-    private String getRandomPostOperation() {
-        String[] operations = {"create", "update", "delete", "publish", "archive"};
-        return operations[random.nextInt(operations.length)];
-    }
 }

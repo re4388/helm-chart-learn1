@@ -57,12 +57,26 @@ grafana:
       memory: 512Mi
       cpu: 200m
   
-  # 持久化儲存
+  # 禁用持久化儲存以避免權限問題
   persistence:
-    enabled: true
-    size: 5Gi
+    enabled: false
   
-  # 預設資料源 (移除，使用 kube-prometheus-stack 的預設配置)
+  # 設置安全上下文
+  securityContext:
+    runAsUser: 472
+    runAsGroup: 472
+    fsGroup: 472
+  
+  # 禁用 init container
+  initChownData:
+    enabled: false
+  
+  # 禁用 sidecar 以避免與靜態配置衝突
+  sidecar:
+    datasources:
+      enabled: false
+    dashboards:
+      enabled: true
   
   # 預設 Dashboard
   dashboardProviders:

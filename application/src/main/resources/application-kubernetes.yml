@@ -62,3 +62,5 @@ logging:
     org.springframework: INFO
     io.opentelemetry: INFO
     io.opentelemetry.javaagent: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{39}: %msg%n"
