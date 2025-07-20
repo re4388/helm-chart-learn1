@@ -1,0 +1,60 @@
+# 簡化的 Fluentd 配置 - 確保能收集日誌
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: monitoring
+data:
+  fluent.conf: |
+    # 收集所有容器日誌
+    <source>
+      @type tail
+      path /var/log/containers/*.log
+      pos_file /var/log/fluentd-containers.log.pos
+      tag kubernetes.*
+      read_from_head true
+      <parse>
+        @type cri
+      </parse>
+    </source>
+
+    # 添加 Kubernetes metadata
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+      kubernetes_url https://kubernetes.default.svc.cluster.local
+      verify_ssl false
+      ca_file /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      bearer_token_file /var/run/secrets/kubernetes.io/serviceaccount/token
+    </filter>
+
+    # 只處理 demo-app namespace 的日誌
+    <filter kubernetes.**>
+      @type grep
+      <regexp>
+        key $.kubernetes.namespace_name
+        pattern ^demo-app$
+      </regexp>
+    </filter>
+
+    # 輸出到 Elasticsearch (簡化版)
+    <match kubernetes.**>
+      @type elasticsearch
+      host elasticsearch.monitoring.svc.cluster.local
+      port 9200
+      index_name demo-app-logs
+      type_name _doc
+      include_tag_key true
+      tag_key @log_name
+      logstash_format false
+      <buffer>
+        @type memory
+        flush_interval 5s
+        retry_forever true
+        retry_wait 1s
+      </buffer>
+    </match>
+
+    # 調試：輸出所有匹配的日誌到 stdout
+    <match **>
+      @type stdout
+    </match>
