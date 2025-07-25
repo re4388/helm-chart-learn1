@@ -1,0 +1,49 @@
+# Filebeat ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: elk-stack
+data:
+  filebeat.yml: |
+    filebeat.inputs:
+    - type: container
+      paths:
+        - /var/log/containers/*.log
+      processors:
+      - add_kubernetes_metadata:
+          host: ${NODE_NAME}
+          matchers:
+          - logs_path:
+              logs_path: "/var/log/containers/"
+      - drop_event:
+          when:
+            not:
+              equals:
+                kubernetes.container.name: "demo-app"
+    
+    # 只發送 demo-app 容器的日誌
+    processors:
+    - add_host_metadata:
+        when.not.contains.tags: forwarded
+    - add_docker_metadata: ~
+    - add_kubernetes_metadata: ~
+    
+    # 輸出到 Logstash
+    output.logstash:
+      hosts: ["logstash.elk-stack.svc.cluster.local:5044"]
+      
+    # 日誌級別
+    logging.level: info
+    logging.to_files: true
+    logging.files:
+      path: /var/log/filebeat
+      name: filebeat
+      keepfiles: 7
+      permissions: 0644
+    
+    # 監控
+    monitoring.enabled: true
+    http.enabled: true
+    http.host: 0.0.0.0
+    http.port: 5066

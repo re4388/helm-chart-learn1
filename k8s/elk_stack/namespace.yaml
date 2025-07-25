@@ -1,0 +1,7 @@
+# ELK Stack Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: elk-stack
+  labels:
+    name: elk-stack

@@ -18,7 +18,7 @@ helm install mongo-express cowboysysop/mongo-express \
 # kubectl get services -n demo-app mongo-express
 
 # NAME            TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE                                                                                             │
-#  │    mongo-express   NodePort   10.43.89.103   <none>        8081:32580/TCP   30s
+# mongo-express   NodePort   10.43.89.103   <none>        8081:32580/TCP   30s
 
 
 # it means it's at 8081

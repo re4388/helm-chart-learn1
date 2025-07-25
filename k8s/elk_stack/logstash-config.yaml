@@ -1,0 +1,153 @@
+# Logstash ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: elk-stack
+data:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    path.config: /usr/share/logstash/pipeline
+    pipeline.workers: 2
+    pipeline.batch.size: 125
+    pipeline.batch.delay: 50
+    queue.type: memory
+    dead_letter_queue.enable: true
+    
+  pipelines.yml: |
+    - pipeline.id: demo-app-logs
+      path.config: "/usr/share/logstash/pipeline/demo-app.conf"
+      pipeline.workers: 2
+      
+  demo-app.conf: |
+    input {
+      beats {
+        port => 5044
+      }
+    }
+    
+    filter {
+      # 只處理 demo-app 容器的日誌
+      if [kubernetes][container][name] == "demo-app" {
+        
+        # 解析 JSON 日誌
+        json {
+          source => "message"
+          target => "app_log"
+        }
+        
+        # 提取基本欄位
+        if [app_log] {
+          mutate {
+            add_field => {
+              "app_level" => "%{[app_log][level]}"
+              "app_service" => "%{[app_log][service]}"
+              "app_trace_id" => "%{[app_log][traceId]}"
+              "app_span_id" => "%{[app_log][spanId]}"
+              "app_request_id" => "%{[app_log][requestId]}"
+              "app_thread" => "%{[app_log][thread]}"
+              "app_logger" => "%{[app_log][logger]}"
+            }
+          }
+          
+          # 處理 @timestamp
+          if [app_log][@timestamp] {
+            date {
+              match => [ "[app_log][@timestamp]", "ISO8601" ]
+              target => "@timestamp"
+            }
+          }
+          
+          # Grok 解析 API 日誌
+          if [app_log][message] {
+            grok {
+              match => { 
+                "[app_log][message]" => [
+                  "API_REQUEST_SUCCESS - RequestId: %{DATA:api_request_id}, Method: %{WORD:http_method}, URI: %{DATA:uri}, StatusCode: %{NUMBER:status_code:int}, Duration: %{NUMBER:duration_ms:float}ms, Controller: %{DATA:controller_name}, Method: %{DATA:controller_method}, ResponseType: %{DATA:response_type}",
+                  "API_REQUEST_START - RequestId: %{DATA:api_request_id}, Method: %{WORD:http_method}, URI: %{DATA:uri}, QueryString: %{DATA:query_string}, ClientIP: %{DATA:client_ip}, UserAgent: %{DATA:user_agent}, Controller: %{DATA:controller_name}, Method: %{DATA:controller_method}, Args: %{DATA:args}",
+                  "API_REQUEST_ERROR - RequestId: %{DATA:api_request_id}, Method: %{WORD:http_method}, URI: %{DATA:uri}, Error: %{DATA:error_message}",
+                  "SLOW_API_DETECTED - RequestId: %{DATA:api_request_id}, Duration: %{NUMBER:duration_ms:float}ms, URI: %{DATA:uri}"
+                ]
+              }
+              tag_on_failure => ["_grokparsefailure"]
+            }
+            
+            # 清理和標準化欄位
+            if [api_request_id] {
+              mutate {
+                add_field => { "log_type" => "api_request" }
+              }
+            }
+            
+            # 添加 Kubernetes 資訊
+            mutate {
+              add_field => {
+                "k8s_namespace" => "%{[kubernetes][namespace]}"
+                "k8s_pod_name" => "%{[kubernetes][pod][name]}"
+                "k8s_container_name" => "%{[kubernetes][container][name]}"
+                "k8s_node_name" => "%{[kubernetes][node][name]}"
+              }
+            }
+          }
+          
+          # 移除不需要的欄位
+          mutate {
+            remove_field => [ "app_log", "agent", "ecs", "host", "input", "log" ]
+          }
+        }
+      } else {
+        # 非 demo-app 容器的日誌直接丟棄
+        drop { }
+      }
+    }
+    
+    output {
+      # 根據日誌類型發送到不同索引
+      if [log_type] == "api_request" {
+        elasticsearch {
+          hosts => ["elasticsearch.elk-stack.svc.cluster.local:9200"]
+          index => "demo-app-api-logs-%{+YYYY.MM.dd}"
+          template_name => "demo-app-api-logs"
+          template_overwrite => true
+          template => {
+            "index_patterns" => ["demo-app-api-logs-*"]
+            "settings" => {
+              "number_of_shards" => 1
+              "number_of_replicas" => 0
+              "index.refresh_interval" => "5s"
+            }
+            "mappings" => {
+              "properties" => {
+                "@timestamp" => { "type" => "date" }
+                "api_request_id" => { "type" => "keyword" }
+                "http_method" => { "type" => "keyword" }
+                "uri" => { "type" => "keyword" }
+                "status_code" => { "type" => "integer" }
+                "duration_ms" => { "type" => "float" }
+                "controller_name" => { "type" => "keyword" }
+                "controller_method" => { "type" => "keyword" }
+                "response_type" => { "type" => "keyword" }
+                "client_ip" => { "type" => "ip" }
+                "user_agent" => { "type" => "text" }
+                "error_message" => { "type" => "text" }
+                "app_level" => { "type" => "keyword" }
+                "app_service" => { "type" => "keyword" }
+                "app_trace_id" => { "type" => "keyword" }
+                "app_span_id" => { "type" => "keyword" }
+                "k8s_namespace" => { "type" => "keyword" }
+                "k8s_pod_name" => { "type" => "keyword" }
+                "k8s_container_name" => { "type" => "keyword" }
+              }
+            }
+          }
+        }
+      } else {
+        elasticsearch {
+          hosts => ["elasticsearch.elk-stack.svc.cluster.local:9200"]
+          index => "demo-app-general-logs-%{+YYYY.MM.dd}"
+        }
+      }
+      
+      # 調試輸出（可選）
+      # stdout { codec => rubydebug }
+    }
