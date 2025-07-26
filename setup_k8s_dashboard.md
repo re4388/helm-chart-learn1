@@ -35,4 +35,17 @@ https://localhost:8085
 
 # need to use Brave Browser 
 
+
+
+                                    🌐 訪問 Kubernetes Dashboard：                                            │
+│                                                                                                                      │
+│                                                                                                                      │
+│  # 方法 1：通過 Kong proxy（推薦）                                                                                   │
+│  kubectl port-forward -n kubernetes-dashboard svc/kubernetes-dashboard-kong-proxy 8443:443                           │
+│  # 然後訪問：https://localhost:8443                                                                                  │
+│                                                                                                                      │
+│  # 方法 2：直接訪問 Web 服務                                                                                         │
+│  kubectl port-forward -n kubernetes-dashboard svc/kubernetes-dashboard-web 8080:8000                                 │
+│  # 然後訪問：http://localhost:8080
+
 ```
