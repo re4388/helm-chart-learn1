@@ -1,7 +1,7 @@
-package com.example.demoapp.adapter.web.controller;
+package com.example.demoapp.adapter.in;
 
-import com.example.demoapp.adapter.web.dto.FileMetadataResponse;
-import com.example.demoapp.adapter.web.dto.FileUploadResponse;
+import com.example.demoapp.domain.dto.FileMetadataResponseDTO;
+import com.example.demoapp.domain.dto.FileUploadResponseDTO;
 import com.example.demoapp.application.usecase.DownloadFileUseCase;
 import com.example.demoapp.application.usecase.ManageFileUseCase;
 import com.example.demoapp.application.usecase.UploadFileUseCase;
@@ -48,13 +48,13 @@ public class FileController {
 
     @Operation(summary = "上傳檔案", description = "將檔案上傳到指定的儲存桶。支援指定儲存桶名稱和上傳者。")
     @ApiResponse(responseCode = "200", description = "檔案上傳成功",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponse.class)))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponseDTO.class)))
     @ApiResponse(responseCode = "400", description = "無效的請求或檔案為空",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponse.class)))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponseDTO.class)))
     @ApiResponse(responseCode = "500", description = "伺服器內部錯誤",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponse.class)))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileUploadResponseDTO.class)))
     @PostMapping("/upload")
-    public ResponseEntity<FileUploadResponse> uploadFile(
+    public ResponseEntity<FileUploadResponseDTO> uploadFile(
             @Parameter(description = "要上傳的檔案", required = true) @RequestParam("file") MultipartFile file,
             @Parameter(description = "儲存桶名稱，預設為 'default'", example = "my-bucket") @RequestParam(value = "bucket", defaultValue = "default") String bucketName,
             @Parameter(description = "上傳者，預設為 'anonymous'", example = "user123") @RequestParam(value = "uploadedBy", defaultValue = "anonymous") String uploadedBy) {
@@ -62,7 +62,7 @@ public class FileController {
         try {
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest()
-                    .body(FileUploadResponse.failure("File is empty"));
+                    .body(FileUploadResponseDTO.failure("File is empty"));
             }
 
             FileMetadata metadata = uploadFileUseCase.execute(
@@ -74,14 +74,14 @@ public class FileController {
                 uploadedBy
             );
 
-            return ResponseEntity.ok(FileUploadResponse.success(metadata));
+            return ResponseEntity.ok(FileUploadResponseDTO.success(metadata));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                .body(FileUploadResponse.failure(e.getMessage()));
+                .body(FileUploadResponseDTO.failure(e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(FileUploadResponse.failure("Failed to upload file: " + e.getMessage()));
+                .body(FileUploadResponseDTO.failure("Failed to upload file: " + e.getMessage()));
         }
     }
 
@@ -122,12 +122,12 @@ public class FileController {
 
     @Operation(summary = "獲取檔案元資料", description = "獲取指定檔案的元資料資訊。")
     @ApiResponse(responseCode = "200", description = "成功獲取檔案元資料",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileMetadataResponse.class)))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileMetadataResponseDTO.class)))
     @ApiResponse(responseCode = "400", description = "無效的請求")
     @ApiResponse(responseCode = "404", description = "檔案元資料未找到")
     @ApiResponse(responseCode = "500", description = "伺服器內部錯誤")
     @GetMapping("/metadata/{bucketName}/{fileName}")
-    public ResponseEntity<FileMetadataResponse> getFileMetadata(
+    public ResponseEntity<FileMetadataResponseDTO> getFileMetadata(
             @Parameter(description = "儲存桶名稱", required = true, example = "my-bucket") @PathVariable String bucketName,
             @Parameter(description = "檔案名稱", required = true, example = "a1b2c3d4e5f6g7h8i9j0.txt") @PathVariable String fileName) {
         
@@ -135,7 +135,7 @@ public class FileController {
             Optional<FileMetadata> metadataOpt = manageFileUseCase.getFileMetadata(bucketName, fileName);
             
             return metadataOpt
-                .map(metadata -> ResponseEntity.ok(FileMetadataResponse.fromDomain(metadata)))
+                .map(metadata -> ResponseEntity.ok(FileMetadataResponseDTO.fromDomain(metadata)))
                 .orElse(ResponseEntity.notFound().build());
 
         } catch (IllegalArgumentException e) {
@@ -147,15 +147,15 @@ public class FileController {
 
     @Operation(summary = "列出儲存桶中的檔案", description = "列出指定儲存桶中的所有檔案元資料。")
     @ApiResponse(responseCode = "200", description = "成功列出檔案",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileMetadataResponse.class)))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileMetadataResponseDTO.class)))
     @ApiResponse(responseCode = "400", description = "無效的請求")
     @ApiResponse(responseCode = "500", description = "伺服器內部錯誤")
     @GetMapping("/list/{bucketName}")
-    public ResponseEntity<List<FileMetadataResponse>> listFiles(@Parameter(description = "儲存桶名稱", required = true, example = "my-bucket") @PathVariable String bucketName) {
+    public ResponseEntity<List<FileMetadataResponseDTO>> listFiles(@Parameter(description = "儲存桶名稱", required = true, example = "my-bucket") @PathVariable String bucketName) {
         try {
             List<FileMetadata> files = manageFileUseCase.listFiles(bucketName);
-            List<FileMetadataResponse> responses = files.stream()
-                .map(FileMetadataResponse::fromDomain)
+            List<FileMetadataResponseDTO> responses = files.stream()
+                .map(FileMetadataResponseDTO::fromDomain)
                 .collect(Collectors.toList());
             
             return ResponseEntity.ok(responses);

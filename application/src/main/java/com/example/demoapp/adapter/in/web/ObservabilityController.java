@@ -1,4 +1,4 @@
-package com.example.demoapp.adapter.web.controller;
+package com.example.demoapp.adapter.in;
 
 import com.example.demoapp.infrastructure.observability.MetricsService;
 import com.example.demoapp.infrastructure.observability.TracingService;
@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * Controller to demonstrate observability features

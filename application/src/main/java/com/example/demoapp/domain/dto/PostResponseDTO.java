@@ -1,4 +1,4 @@
-package com.example.demoapp.adapter.web.dto;
+package com.example.demoapp.domain.dto;
 
 import com.example.demoapp.domain.model.Post;
 import io.swagger.v3.oas.annotations.media.Schema;

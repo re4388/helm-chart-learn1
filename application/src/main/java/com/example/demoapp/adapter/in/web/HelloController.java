@@ -1,7 +1,7 @@
-package com.example.demoapp.adapter.web.controller;
+package com.example.demoapp.adapter.in;
 
-import com.example.demoapp.adapter.web.dto.GreetingResponse;
-import com.example.demoapp.adapter.web.dto.HealthResponse;
+import com.example.demoapp.domain.dto.GreetingResponseDTO;
+import com.example.demoapp.domain.dto.HealthResponseDTO;
 import com.example.demoapp.application.usecase.GetGreetingUseCase;
 import com.example.demoapp.application.usecase.GetHealthStatusUseCase;
 import com.example.demoapp.domain.model.Greeting;
@@ -38,28 +38,28 @@ public class HelloController {
 
     @Operation(summary = "獲取預設問候語", description = "返回應用程式的預設問候語和版本資訊。")
     @ApiResponse(responseCode = "200", description = "成功獲取問候語",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = GreetingResponse.class)))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = GreetingResponseDTO.class)))
     @GetMapping("/")
-    public GreetingResponse home() {
+    public GreetingResponseDTO home() {
         Greeting greeting = getGreetingUseCase.execute();
-        return GreetingResponse.fromDomain(greeting, version);
+        return GreetingResponseDTO.fromDomain(greeting, version);
     }
 
     @Operation(summary = "獲取個性化問候語", description = "根據提供的名稱返回個性化問候語和版本資訊。")
     @ApiResponse(responseCode = "200", description = "成功獲取個性化問候語",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = GreetingResponse.class)))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = GreetingResponseDTO.class)))
     @GetMapping("/hello/{name}")
-    public GreetingResponse hello(@Parameter(description = "要問候的名稱", required = true, example = "World") @PathVariable String name) {
+    public GreetingResponseDTO hello(@Parameter(description = "要問候的名稱", required = true, example = "World") @PathVariable String name) {
         Greeting greeting = getGreetingUseCase.execute(name);
-        return GreetingResponse.fromDomain(greeting, version);
+        return GreetingResponseDTO.fromDomain(greeting, version);
     }
 
     @Operation(summary = "獲取應用程式健康狀態", description = "返回應用程式的當前健康狀態。")
     @ApiResponse(responseCode = "200", description = "成功獲取健康狀態",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = HealthResponse.class)))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = HealthResponseDTO.class)))
     @GetMapping("/health")
-    public HealthResponse health() {
+    public HealthResponseDTO health() {
         HealthStatus healthStatus = getHealthStatusUseCase.execute();
-        return HealthResponse.fromDomain(healthStatus);
+        return HealthResponseDTO.fromDomain(healthStatus);
     }
 }

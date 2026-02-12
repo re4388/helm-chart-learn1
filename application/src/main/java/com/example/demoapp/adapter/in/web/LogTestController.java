@@ -1,4 +1,4 @@
-package com.example.demoapp.adapter.web.controller;
+package com.example.demoapp.adapter.in;
 
 import com.example.demoapp.infrastructure.logging.ApiLog;
 import io.swagger.v3.oas.annotations.Operation;
