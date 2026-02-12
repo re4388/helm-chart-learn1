@@ -66,3 +66,5 @@ logging:
     io.opentelemetry: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{39}: %msg%n"
+
+

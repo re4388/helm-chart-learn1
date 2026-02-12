@@ -27,7 +27,7 @@ import java.util.Optional;
 @Service
 public class MinioFileStorageService implements FileStorageService {
     
-    private static final Logger logger = LoggerFactory.getLogger(MinioFileStorageService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MinioFileStorageService.class);
     
     private final MinioClient minioClient;
     private final MetricsService metricsService;
@@ -39,6 +39,7 @@ public class MinioFileStorageService implements FileStorageService {
                                   MetricsService metricsService,
                                   TracingService tracingService,
                                   MeterRegistry meterRegistry) {
+
         this.minioClient = minioClient;
         this.metricsService = metricsService;
         this.tracingService = tracingService;
@@ -59,7 +60,7 @@ public class MinioFileStorageService implements FileStorageService {
             Timer.Sample sample = metricsService.startMinioTimer("upload");
             
             try {
-                logger.info("Starting file upload: bucket={}, fileName={}, size={}, uploadedBy={}", 
+                LOG.info("Starting file upload: bucket={}, fileName={}, size={}, uploadedBy={}",
                            bucketName, fileName, size, uploadedBy);
                 
                 tracingService.addSpanAttribute("minio.bucket", bucketName);
@@ -86,7 +87,7 @@ public class MinioFileStorageService implements FileStorageService {
                 metricsService.recordFileOperation("upload", "success", size);
                 minioUploadsTotal.increment();
                 
-                logger.info("Successfully uploaded file: bucket={}, fileName={}, size={}", 
+                LOG.info("Successfully uploaded file: bucket={}, fileName={}, size={}",
                            bucketName, fileName, size);
                 
                 return metadata;
@@ -95,7 +96,7 @@ public class MinioFileStorageService implements FileStorageService {
                 metricsService.stopMinioTimer(sample, "upload", "error");
                 metricsService.recordFileOperation("upload", "error", size);
                 
-                logger.error("Failed to upload file: bucket={}, fileName={}, error={}", 
+                LOG.error("Failed to upload file: bucket={}, fileName={}, error={}",
                             bucketName, fileName, e.getMessage(), e);
                 
                 throw new RuntimeException("Failed to upload file: " + fileName, e);

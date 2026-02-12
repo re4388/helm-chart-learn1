@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class TracingService {
     
-    private static final Logger logger = LoggerFactory.getLogger(TracingService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TracingService.class);
     
     private final Tracer tracer;
     
@@ -35,13 +35,13 @@ public class TracingService {
                 .start();
         
         try (Tracer.SpanInScope ws = tracer.withSpan(span)) {
-            logger.info("Starting business operation: {} for {} with id: {}", 
+            LOG.info("Starting business operation: {} for {} with id: {}",
                        operationName, entityType, entityId);
             
             T result = operation.get();
             
             span.tag("operation.status", "success");
-            logger.info("Completed business operation: {} for {} with id: {}", 
+            LOG.info("Completed business operation: {} for {} with id: {}",
                        operationName, entityType, entityId);
             
             return result;
@@ -50,7 +50,7 @@ public class TracingService {
             span.tag("error.message", e.getMessage());
             span.tag("error.type", e.getClass().getSimpleName());
             
-            logger.error("Failed business operation: {} for {} with id: {}", 
+            LOG.error("Failed business operation: {} for {} with id: {}",
                         operationName, entityType, entityId, e);
             throw e;
         } finally {
@@ -72,7 +72,7 @@ public class TracingService {
                 .start();
         
         try (Tracer.SpanInScope ws = tracer.withSpan(span)) {
-            logger.debug("Making external call to {} for operation: {}", serviceName, operation);
+            LOG.debug("Making external call to {} for operation: {}", serviceName, operation);
             
             T result = call.get();
             
@@ -83,7 +83,7 @@ public class TracingService {
             span.tag("error.message", e.getMessage());
             span.tag("error.type", e.getClass().getSimpleName());
             
-            logger.error("External call failed to {} for operation: {}", serviceName, operation, e);
+            LOG.error("External call failed to {} for operation: {}", serviceName, operation, e);
             throw e;
         } finally {
             span.end();

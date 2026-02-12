@@ -9,13 +9,13 @@ import java.time.LocalDateTime;
  * 問候端點的回應 DTO
  */
 @Schema(description = "問候回應物件")
-public record GreetingResponse(
+public record GreetingResponseDTO(
     @Schema(description = "問候訊息", example = "Hello, World! from demo-app") String message,
     @Schema(description = "時間戳記", example = "2023-10-26T10:00:00") LocalDateTime timestamp,
     @Schema(description = "應用程式版本", example = "1.0.0") String version) {
 
-    public static GreetingResponse fromDomain(Greeting greeting, String version) {
-        return new GreetingResponse(
+    public static GreetingResponseDTO fromDomain(Greeting greeting, String version) {
+        return new GreetingResponseDTO(
                 greeting.getFormattedMessage(),
                 greeting.getTimestamp(),
                 version

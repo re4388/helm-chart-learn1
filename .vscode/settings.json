@@ -22,5 +22,7 @@
    "cSpell.words": [
       "ENCRYPTEDSAVEDOBJECTS",
       "xpack"
-   ]
+   ],
+   "kiroAgent.configureMCP": "Enabled",
+   "java.compile.nullAnalysis.mode": "disabled"
 }

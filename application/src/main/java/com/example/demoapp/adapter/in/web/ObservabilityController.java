@@ -1,4 +1,4 @@
-package com.example.demoapp.adapter.in;
+package com.example.demoapp.adapter.in.web;
 
 import com.example.demoapp.infrastructure.observability.MetricsService;
 import com.example.demoapp.infrastructure.observability.TracingService;

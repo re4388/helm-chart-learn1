@@ -1,4 +1,4 @@
-package com.example.demoapp.adapter.in;
+package com.example.demoapp.adapter.in.web;
 
 import com.example.demoapp.domain.dto.FileMetadataResponseDTO;
 import com.example.demoapp.domain.dto.FileUploadResponseDTO;

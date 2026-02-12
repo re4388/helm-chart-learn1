@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 檔案元資料端點的回應 DTO
  */
 @Schema(description = "檔案元資料回應物件")
-public class FileMetadataResponse {
+public class FileMetadataResponseDTO {
     @Schema(description = "檔案名稱 (系統生成)", example = "a1b2c3d4e5f6g7h8i9j0.txt")
     private final String fileName;
     @Schema(description = "原始檔案名稱", example = "my_document.txt")
@@ -31,9 +31,9 @@ public class FileMetadataResponse {
     @Schema(description = "是否為文件", example = "false")
     private final boolean isDocument;
 
-    public FileMetadataResponse(String fileName, String originalFileName, String contentType, 
-                               long size, String bucketName, LocalDateTime uploadedAt, 
-                               String uploadedBy, String fileExtension, boolean isImage, boolean isDocument) {
+    public FileMetadataResponseDTO(String fileName, String originalFileName, String contentType,
+                                   long size, String bucketName, LocalDateTime uploadedAt,
+                                   String uploadedBy, String fileExtension, boolean isImage, boolean isDocument) {
         this.fileName = fileName;
         this.originalFileName = originalFileName;
         this.contentType = contentType;
@@ -46,8 +46,8 @@ public class FileMetadataResponse {
         this.isDocument = isDocument;
     }
 
-    public static FileMetadataResponse fromDomain(FileMetadata metadata) {
-        return new FileMetadataResponse(
+    public static FileMetadataResponseDTO fromDomain(FileMetadata metadata) {
+        return new FileMetadataResponseDTO(
             metadata.getFileName(),
             metadata.getOriginalFileName(),
             metadata.getContentType(),

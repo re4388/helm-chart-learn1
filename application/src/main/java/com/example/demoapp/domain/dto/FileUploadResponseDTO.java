@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 檔案上傳端點的回應 DTO
  */
 @Schema(description = "檔案上傳回應物件")
-public class FileUploadResponse {
+public class FileUploadResponseDTO {
     @Schema(description = "檔案名稱 (系統生成)", example = "a1b2c3d4e5f6g7h8i9j0.txt")
     private final String fileName;
     @Schema(description = "原始檔案名稱", example = "my_document.txt")
@@ -29,9 +29,9 @@ public class FileUploadResponse {
     @Schema(description = "上傳結果訊息", example = "File uploaded successfully")
     private final String message;
 
-    public FileUploadResponse(String fileName, String originalFileName, String contentType, 
-                             long size, String bucketName, LocalDateTime uploadedAt, 
-                             String uploadedBy, boolean success, String message) {
+    public FileUploadResponseDTO(String fileName, String originalFileName, String contentType,
+                                 long size, String bucketName, LocalDateTime uploadedAt,
+                                 String uploadedBy, boolean success, String message) {
         this.fileName = fileName;
         this.originalFileName = originalFileName;
         this.contentType = contentType;
@@ -43,8 +43,8 @@ public class FileUploadResponse {
         this.message = message;
     }
 
-    public static FileUploadResponse success(FileMetadata metadata) {
-        return new FileUploadResponse(
+    public static FileUploadResponseDTO success(FileMetadata metadata) {
+        return new FileUploadResponseDTO(
             metadata.getFileName(),
             metadata.getOriginalFileName(),
             metadata.getContentType(),
@@ -57,8 +57,8 @@ public class FileUploadResponse {
         );
     }
 
-    public static FileUploadResponse failure(String message) {
-        return new FileUploadResponse(
+    public static FileUploadResponseDTO failure(String message) {
+        return new FileUploadResponseDTO(
             null, null, null, 0, null, null, null, false, message
         );
     }

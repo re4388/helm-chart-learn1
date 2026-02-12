@@ -8,12 +8,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * 健康檢查端點的回應 DTO
  */
 @Schema(description = "健康檢查回應物件")
-public record HealthResponse(
+public record HealthResponseDTO(
     @Schema(description = "服務狀態", example = "UP") String status,
     @Schema(description = "服務名稱", example = "demo-app") String service) {
 
-    public static HealthResponse fromDomain(HealthStatus healthStatus) {
-        return new HealthResponse(
+    public static HealthResponseDTO fromDomain(HealthStatus healthStatus) {
+        return new HealthResponseDTO(
                 healthStatus.getStatus().name(),
                 healthStatus.getServiceName()
         );

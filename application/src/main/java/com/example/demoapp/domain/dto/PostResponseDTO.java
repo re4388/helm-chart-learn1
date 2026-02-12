@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 文章端點的回應 DTO
  */
 @Schema(description = "文章回應物件")
-public class PostResponse {
+public class PostResponseDTO {
     @Schema(description = "文章 ID", example = "post-123")
     private final String id;
     @Schema(description = "文章標題", example = "我的第一篇文章")
@@ -21,7 +21,7 @@ public class PostResponse {
     @Schema(description = "文章建立時間", example = "2023-10-26T10:00:00")
     private final LocalDateTime createdAt;
 
-    public PostResponse(String id, String title, String content, String status, LocalDateTime createdAt) {
+    public PostResponseDTO(String id, String title, String content, String status, LocalDateTime createdAt) {
         this.id = id;
         this.title = title;
         this.content = content;
@@ -29,8 +29,8 @@ public class PostResponse {
         this.createdAt = createdAt;
     }
 
-    public static PostResponse fromDomain(Post post) {
-        return new PostResponse(
+    public static PostResponseDTO fromDomain(Post post) {
+        return new PostResponseDTO(
             post.getId(),
             post.getTitle(),
             post.getContent(),
