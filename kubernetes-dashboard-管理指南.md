@@ -28,11 +28,19 @@ kubectl delete namespace kubernetes-dashboard
 
 ### 1. 重新安裝 Dashboard
 
-```bash
-# 確保 Helm repo 是最新的
-helm repo update
+正確流程:
+先加 repo，再 update，最後 install。
 
-# 重新安裝 Dashboard
+
+正確流程
+
+先加 repo，再 update，最後 install。
+
+1️⃣ 加 Helm repo
+helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+2️⃣ 更新 repo cache
+helm repo update
+3️⃣ 再安裝
 helm install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard \
   --create-namespace \
   --namespace kubernetes-dashboard \
