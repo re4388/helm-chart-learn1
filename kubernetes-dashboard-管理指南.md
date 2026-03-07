@@ -37,7 +37,7 @@ kubectl delete namespace kubernetes-dashboard
 先加 repo，再 update，最後 install。
 
 1️⃣ 加 Helm repo
-`helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/`
+`helm repo add kubernetes-dashboard https://kubernetes-retired.github.io/dashboard`
 
 
 2️⃣ 更新 repo cache
@@ -49,7 +49,15 @@ helm install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard \
   --create-namespace \
   --namespace kubernetes-dashboard \
   --set service.type=NodePort
-  ```
+
+```
+
+check if success
+```
+kubectl get pods -n kubernetes-dashboard
+```
+
+
 
 # 重新創建管理員用戶
 ```
