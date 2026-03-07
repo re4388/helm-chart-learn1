@@ -37,16 +37,22 @@ kubectl delete namespace kubernetes-dashboard
 先加 repo，再 update，最後 install。
 
 1️⃣ 加 Helm repo
-helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+`helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/`
+
+
 2️⃣ 更新 repo cache
-helm repo update
+`helm repo update`
+
 3️⃣ 再安裝
+```
 helm install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard \
   --create-namespace \
   --namespace kubernetes-dashboard \
   --set service.type=NodePort
+  ```
 
 # 重新創建管理員用戶
+```
 kubectl apply -f k8s/argocd/dashboard-adminuser.yaml
 ```
 
