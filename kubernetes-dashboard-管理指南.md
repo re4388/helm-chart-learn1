@@ -66,16 +66,13 @@ kubectl -n kubernetes-dashboard create token admin-user
 ### 3. 重新啟動訪問
 
 ```bash
-# 方法 1：通過 Kong proxy（推薦）
+# 通過 Kong proxy
 kubectl port-forward -n kubernetes-dashboard svc/kubernetes-dashboard-kong-proxy 8443:443
 
-# 方法 2：直接訪問 Web 服務
-kubectl port-forward -n kubernetes-dashboard svc/kubernetes-dashboard-web 8080:8000
 ```
 
 然後在瀏覽器中訪問：
 - 方法 1：`https://localhost:8443`
-- 方法 2：`http://localhost:8080`
 
 ## ✅ 安全性保證
 
